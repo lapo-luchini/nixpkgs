@@ -72,9 +72,10 @@ flutter329.buildFlutterApplication rec {
     owner = "lapo-luchini";
     repo = "rustdesk";
     # feat/profiles @ 2026-10-26 (https://github.com/lapo-luchini/rustdesk/tree/feat/profiles)
-    rev = "50709f8bb12e2e571220fe131f6aace725c5a965";
+    # + local build fixes (1de99cf56)
+    rev = "1de99cf569864983e9e04d95ceeb2faa6cfd59d4";
     fetchSubmodules = true;
-    hash = "sha256-JWdCV/onQVm6V8umhFoE5CaPA147NlXscRMFM+NHnb4=";
+    hash = "sha256-x2NhTMrCgaHKYyi7/AkcP9ptn9rvOZZ3iaegWaqItRQ=";
   };
 
   strictDeps = true;
@@ -157,10 +158,6 @@ flutter329.buildFlutterApplication rec {
 
   patches = [
     ./make-build-reproducible.patch
-    # upstream fork (feat/profiles): stray closing brace (Dart), mis-typed
-    # async callback (Dart) and a missing closure `move` (Rust)
-    ./fix-fork-build.patch
-    ./fix-fork-rust.patch
   ];
 
   prepareBuildRunner = ''
