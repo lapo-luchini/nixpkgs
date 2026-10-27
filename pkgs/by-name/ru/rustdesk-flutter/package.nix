@@ -66,24 +66,31 @@ let
 in
 flutter329.buildFlutterApplication rec {
   pname = "rustdesk";
-  version = "1.4.9";
+  version = "1.5.1-unstable-2026-10-26";
 
   src = fetchFromGitHub {
-    owner = "rustdesk";
+    owner = "lapo-luchini";
     repo = "rustdesk";
-    tag = version;
+    # feat/profiles @ 2026-10-26 (https://github.com/lapo-luchini/rustdesk/tree/feat/profiles)
+    rev = "50709f8bb12e2e571220fe131f6aace725c5a965";
     fetchSubmodules = true;
-    hash = "sha256-AnwdIO4TveC48uMioBCvH60xun24ckK420ONSEB9lQI=";
+    hash = "sha256-JWdCV/onQVm6V8umhFoE5CaPA147NlXscRMFM+NHnb4=";
   };
 
   strictDeps = true;
+  # the fork's git-sourced plugins embed build-dir rpaths; skip the (/tmp/...) audit
+  env.noAuditTmpdir = "1";
   env.VCPKG_ROOT = "/homeless-shelter"; # idk man, makes the build go since https://github.com/21pages/hwcodec/commit/1873c34e3da070a462540f61c0b782b7ab15dc84
   env.OPENSSL_NO_VENDOR = true;
 
   # Configure the Flutter/Dart build
   sourceRoot = "${src.name}/flutter";
-  # curl -sL https://raw.githubusercontent.com/rustdesk/rustdesk/1.4.9/flutter/pubspec.lock | yq > pubspec.lock.json
-  # Then add flutter_test, fake_async, leak_tracker*, vm_service SDK deps manually
+  # Dart 3.7-compatible resolution of the fork's flutter/pubspec.yaml (the
+  # fork's committed pubspec.lock is a Dart-3.6 resolution that breaks
+  # build_runner against the Dart 3.7 `_macros` vendor):
+  # baseline = upstream 1.4.9 lock, then: drop `external_path` (gone from the
+  # fork's pubspec.yaml) and replace the git-sourced deps with the fork's ones
+  # (see ./git-hashes.json).
   pubspecLock = lib.importJSON ./pubspec.lock.json;
   gitHashes = lib.importJSON ./git-hashes.json;
 
@@ -96,7 +103,7 @@ flutter329.buildFlutterApplication rec {
       src
       patches
       ;
-    hash = "sha256-HPvvsTcjSErGfdNwsHgWhs930Fe0hmK1g5J/ngtlkKM=";
+    hash = "sha256-9isCpqoJUL+M3/GhT+JmKX1VH2vJ0CwiYanMGfcZsro=";
   };
 
   dontCargoBuild = true;
@@ -150,6 +157,10 @@ flutter329.buildFlutterApplication rec {
 
   patches = [
     ./make-build-reproducible.patch
+    # upstream fork (feat/profiles): stray closing brace (Dart), mis-typed
+    # async callback (Dart) and a missing closure `move` (Rust)
+    ./fix-fork-build.patch
+    ./fix-fork-rust.patch
   ];
 
   prepareBuildRunner = ''
